@@ -1,0 +1,523 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); font-size: 15px; color: var(--color-text-primary); }
+  .app { max-width: 900px; margin: 0 auto; padding: 0 0 2rem; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px; }
+  .topbar h1 { font-size: 18px; font-weight: 500; }
+  .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav button { background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+  .nav button.active, .nav button:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .nav button.active { border-color: var(--color-border-primary); font-weight: 500; }
+  .view { display: none; padding: 0 1.25rem; }
+  .view.active { display: block; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.9rem 1rem; }
+  .metric .label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric .value { font-size: 22px; font-weight: 500; }
+  .metric .value.alert { color: var(--color-text-danger); }
+  input, select, textarea { font-family: var(--font-sans); font-size: 14px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; outline: none; width: 100%; }
+  input:focus, select:focus { border-color: var(--color-border-primary); box-shadow: 0 0 0 2px rgba(100,100,255,0.1); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 16px; font-size: 14px; cursor: pointer; color: var(--color-text-primary); font-family: var(--font-sans); transition: all 0.15s; }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--color-background-info); border-color: var(--color-border-info); color: var(--color-text-info); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-danger { color: var(--color-text-danger); border-color: var(--color-border-danger); }
+  .btn-danger:hover { background: var(--color-background-danger); }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .search-bar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+  .search-bar input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  td { padding: 10px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-background-secondary); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .badge-ok { background: #EAF3DE; color: #3B6D11; }
+  .badge-low { background: #FAEEDA; color: #854F0B; }
+  .badge-out { background: #FCEBEB; color: #A32D2D; }
+  .alert-box { background: var(--color-background-warning); border: 0.5px solid var(--color-border-warning); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: var(--color-text-warning); margin-bottom: 1rem; }
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; border: 0.5px solid var(--color-border-secondary); }
+  .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-header h2 { font-size: 16px; font-weight: 500; }
+  .history-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13px; }
+  .history-row:last-child { border-bottom: none; }
+  .tag-entrada { color: var(--color-text-success); font-weight: 500; }
+  .tag-salida { color: var(--color-text-danger); font-weight: 500; }
+  .tag-venta { color: var(--color-text-info); font-weight: 500; }
+  .barcode-display { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+  .scanner-area { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 1.5rem; text-align: center; color: var(--color-text-secondary); font-size: 13px; margin-bottom: 1rem; cursor: pointer; transition: all 0.15s; }
+  .scanner-area:hover { border-color: var(--color-border-info); color: var(--color-text-info); background: var(--color-background-info); }
+  .scan-icon { font-size: 28px; margin-bottom: 6px; }
+  @media (max-width: 600px) { .grid2, .grid3 { grid-template-columns: 1fr; } td.hide-mobile { display: none; } th.hide-mobile { display: none; } }
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <h1>🧶 Lanas Inventario</h1>
+    <nav class="nav">
+      <button class="active" onclick="showView('dashboard', this)">Inicio</button>
+      <button onclick="showView('inventario', this)">Inventario</button>
+      <button onclick="showView('ventas', this)">Ventas</button>
+      <button onclick="showView('reportes', this)">Reportes</button>
+    </nav>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="view-dashboard" class="view active">
+    <div class="metrics" id="metrics-area"></div>
+    <div id="alertas-area"></div>
+    <div class="card">
+      <div class="section-header">
+        <h2>Movimientos recientes</h2>
+      </div>
+      <div id="historial-reciente"></div>
+    </div>
+  </div>
+
+  <!-- INVENTARIO -->
+  <div id="view-inventario" class="view">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Buscar por nombre, código, color, proveedor..." oninput="renderTabla()">
+      <button class="btn btn-primary" onclick="abrirModal('nuevo')">+ Agregar producto</button>
+    </div>
+    <div class="scanner-area" onclick="simularEscaneo()" title="En dispositivo móvil puedes usar la cámara">
+      <div class="scan-icon">▦</div>
+      <div>Escanear código de barras</div>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.7;">Haz clic para simular (en celular usa la cámara)</div>
+    </div>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <table id="tabla-inventario">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="hide-mobile">Código</th>
+            <th>Stock</th>
+            <th class="hide-mobile">Precio</th>
+            <th class="hide-mobile">Proveedor</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VENTAS -->
+  <div id="view-ventas" class="view">
+    <div class="grid2" style="margin-bottom: 1rem;">
+      <div class="card">
+        <div class="section-header"><h2>Registrar venta</h2></div>
+        <div class="field">
+          <label>Buscar producto</label>
+          <input type="text" id="venta-search" placeholder="Nombre o código..." oninput="renderVentaOptions()">
+        </div>
+        <div id="venta-options" style="margin-bottom: 12px;"></div>
+        <div id="venta-seleccionado" style="display:none;">
+          <div class="field">
+            <label>Producto seleccionado</label>
+            <div id="venta-prod-nombre" style="font-weight: 500; padding: 8px 0;"></div>
+          </div>
+          <div class="field">
+            <label>Cantidad</label>
+            <input type="number" id="venta-cantidad" min="1" value="1">
+          </div>
+          <div class="field">
+            <label>Precio unitario ($)</label>
+            <input type="number" id="venta-precio" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label>Nota (opcional)</label>
+            <input type="text" id="venta-nota" placeholder="Cliente, observación...">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" onclick="registrarVenta()">Registrar venta</button>
+            <button class="btn" onclick="cancelarVenta()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header"><h2>Ventas de hoy</h2></div>
+        <div id="ventas-hoy-resumen" style="margin-bottom: 12px;"></div>
+        <div id="ventas-hoy-lista"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTES -->
+  <div id="view-reportes" class="view">
+    <div class="grid2" style="margin-bottom: 1rem;">
+      <div class="card">
+        <div class="section-header"><h2>Resumen general</h2></div>
+        <div id="reporte-resumen"></div>
+      </div>
+      <div class="card">
+        <div class="section-header"><h2>Productos con stock bajo</h2></div>
+        <div id="reporte-bajo"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        <h2>Historial completo de movimientos</h2>
+        <button class="btn" onclick="exportarCSV()">Exportar CSV ↗</button>
+      </div>
+      <div id="reporte-historial"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal" id="modal-content">
+    <h2 id="modal-titulo">Agregar producto</h2>
+    <div class="grid2">
+      <div class="field">
+        <label>Nombre del producto *</label>
+        <input type="text" id="f-nombre" placeholder="Ej: Lana merino azul">
+      </div>
+      <div class="field">
+        <label>Código de barras</label>
+        <input type="text" id="f-codigo" placeholder="Ej: 7891234567890">
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label>Color</label>
+        <input type="text" id="f-color" placeholder="Ej: Azul marino">
+      </div>
+      <div class="field">
+        <label>Gramaje / tipo</label>
+        <input type="text" id="f-gramaje" placeholder="Ej: 100g / 4 ply">
+      </div>
+      <div class="field">
+        <label>Material</label>
+        <input type="text" id="f-material" placeholder="Ej: Merino, algodón">
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label>Stock actual *</label>
+        <input type="number" id="f-stock" min="0" value="0">
+      </div>
+      <div class="field">
+        <label>Alerta stock mínimo</label>
+        <input type="number" id="f-minimo" min="0" value="5">
+      </div>
+      <div class="field">
+        <label>Precio de venta ($)</label>
+        <input type="number" id="f-precio" min="0" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Proveedor</label>
+        <input type="text" id="f-proveedor" placeholder="Nombre del proveedor">
+      </div>
+      <div class="field">
+        <label>Notas</label>
+        <input type="text" id="f-notas" placeholder="Observaciones...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let productos = [], historial = [], ventaProductoId = null, editandoId = null;
+
+const STORAGE_KEY = 'lanas_inventario_v1';
+
+function cargarDatos() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) { const p = JSON.parse(d); productos = p.productos||[]; historial = p.historial||[]; }
+  } catch(e) {}
+  if (!productos.length) cargarEjemplos();
+}
+
+function guardarDatos() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({productos, historial})); } catch(e) {}
+}
+
+function cargarEjemplos() {
+  productos = [
+    {id:1, nombre:"Lana merino azul marino", codigo:"7891234000001", color:"Azul marino", gramaje:"100g", material:"Merino", stock:18, minimo:5, precio:4500, proveedor:"Textiles Sur", notas:""},
+    {id:2, nombre:"Lana acrílica roja", codigo:"7891234000002", color:"Rojo", gramaje:"100g", material:"Acrílico", stock:3, minimo:5, precio:1800, proveedor:"Mayorista Norte", notas:"Oferta"},
+    {id:3, nombre:"Hilo algodón natural", codigo:"7891234000003", color:"Natural", gramaje:"50g", material:"Algodón", stock:0, minimo:3, precio:2200, proveedor:"Textiles Sur", notas:""},
+    {id:4, nombre:"Lana gruesa verde bosque", codigo:"7891234000004", color:"Verde", gramaje:"200g", material:"Acrílico", stock:12, minimo:4, precio:5900, proveedor:"Mayorista Norte", notas:""},
+    {id:5, nombre:"Hilo metálico dorado", codigo:"7891234000005", color:"Dorado", gramaje:"25g", material:"Poliéster metálico", stock:7, minimo:2, precio:3200, proveedor:"Accesorios Craft", notas:"Navidad"},
+  ];
+  const hoy = new Date().toISOString();
+  historial = [
+    {id:1, tipo:"entrada", productoId:1, cantidad:10, fecha:hoy, nota:"Reposición inicial"},
+    {id:2, tipo:"entrada", productoId:2, cantidad:8, fecha:hoy, nota:"Reposición inicial"},
+    {id:3, tipo:"venta", productoId:1, cantidad:2, precio:4500, fecha:hoy, nota:""},
+    {id:4, tipo:"entrada", productoId:4, cantidad:12, fecha:hoy, nota:"Reposición inicial"},
+  ];
+  guardarDatos();
+}
+
+function getProducto(id) { return productos.find(p=>p.id===id); }
+
+function stockBadge(p) {
+  if (p.stock===0) return '<span class="badge badge-out">Agotado</span>';
+  if (p.stock<=p.minimo) return '<span class="badge badge-low">Stock bajo</span>';
+  return '<span class="badge badge-ok">Disponible</span>';
+}
+
+function renderMetrics() {
+  const total = productos.length;
+  const agotados = productos.filter(p=>p.stock===0).length;
+  const bajos = productos.filter(p=>p.stock>0&&p.stock<=p.minimo).length;
+  const ventasHoy = historial.filter(h=>h.tipo==='venta'&&esMismodia(h.fecha));
+  const ingresoHoy = ventasHoy.reduce((a,v)=>a+(v.precio||0)*v.cantidad,0);
+  document.getElementById('metrics-area').innerHTML = `
+    <div class="metric"><div class="label">Total productos</div><div class="value">${total}</div></div>
+    <div class="metric"><div class="label">Agotados</div><div class="value alert">${agotados}</div></div>
+    <div class="metric"><div class="label">Stock bajo</div><div class="value" style="color:var(--color-text-warning)">${bajos}</div></div>
+    <div class="metric"><div class="label">Ventas hoy</div><div class="value">${ventasHoy.length}</div></div>
+    <div class="metric"><div class="label">Ingreso hoy</div><div class="value">$${ingresoHoy.toLocaleString()}</div></div>
+  `;
+}
+
+function esMismodia(fecha) {
+  const d = new Date(fecha), hoy = new Date();
+  return d.getDate()===hoy.getDate()&&d.getMonth()===hoy.getMonth()&&d.getFullYear()===hoy.getFullYear();
+}
+
+function renderAlertas() {
+  const bajos = productos.filter(p=>p.stock>0&&p.stock<=p.minimo);
+  const agotados = productos.filter(p=>p.stock===0);
+  let html = '';
+  if (agotados.length) html += `<div class="alert-box">⚠ Productos agotados: ${agotados.map(p=>'<strong>'+p.nombre+'</strong>').join(', ')}</div>`;
+  if (bajos.length) html += `<div class="alert-box" style="background:var(--color-background-warning);border-color:var(--color-border-warning);color:var(--color-text-warning);">Stock bajo en: ${bajos.map(p=>p.nombre+' ('+p.stock+' unid.)').join(', ')}</div>`;
+  document.getElementById('alertas-area').innerHTML = html;
+}
+
+function renderHistorialReciente() {
+  const ult = [...historial].reverse().slice(0,8);
+  if (!ult.length) { document.getElementById('historial-reciente').innerHTML='<p style="color:var(--color-text-secondary);font-size:13px">Sin movimientos aún.</p>'; return; }
+  document.getElementById('historial-reciente').innerHTML = ult.map(h => {
+    const p = getProducto(h.productoId);
+    const nombre = p ? p.nombre : 'Producto eliminado';
+    const tipo = h.tipo==='entrada'?'<span class="tag-entrada">+ Entrada</span>':h.tipo==='venta'?'<span class="tag-venta">Venta</span>':'<span class="tag-salida">– Salida</span>';
+    const fecha = new Date(h.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-row"><span>${tipo} · ${nombre}</span><span style="color:var(--color-text-secondary)">${h.cantidad} unid. · ${fecha}</span></div>`;
+  }).join('');
+}
+
+function renderTabla() {
+  const q = (document.getElementById('search-input')?.value||'').toLowerCase();
+  const filtrados = productos.filter(p =>
+    p.nombre.toLowerCase().includes(q)||
+    p.codigo.includes(q)||
+    (p.color||'').toLowerCase().includes(q)||
+    (p.proveedor||'').toLowerCase().includes(q)
+  );
+  document.getElementById('tabla-body').innerHTML = filtrados.map(p=>`
+    <tr>
+      <td><div style="font-weight:500">${p.nombre}</div><div style="font-size:11px;color:var(--color-text-secondary)">${p.color||''} · ${p.material||''}</div></td>
+      <td class="hide-mobile"><span class="barcode-display">${p.codigo||'—'}</span></td>
+      <td><strong>${p.stock}</strong> <span style="font-size:12px;color:var(--color-text-secondary)">unid.</span></td>
+      <td class="hide-mobile">$${(p.precio||0).toLocaleString()}</td>
+      <td class="hide-mobile">${p.proveedor||'—'}</td>
+      <td>${stockBadge(p)}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn" style="padding:4px 10px;font-size:12px" onclick="abrirModal('editar',${p.id})">Editar</button>
+          <button class="btn" style="padding:4px 10px;font-size:12px" onclick="abrirMovimiento(${p.id})">+/−</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderVentaOptions() {
+  const q = (document.getElementById('venta-search')?.value||'').toLowerCase();
+  if (!q) { document.getElementById('venta-options').innerHTML=''; return; }
+  const res = productos.filter(p=>p.stock>0&&(p.nombre.toLowerCase().includes(q)||p.codigo.includes(q))).slice(0,5);
+  document.getElementById('venta-options').innerHTML = res.map(p=>
+    `<div style="padding:8px 10px;cursor:pointer;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:4px;font-size:13px" onclick="seleccionarVentaProducto(${p.id})">${p.nombre} · <span style="color:var(--color-text-secondary)">Stock: ${p.stock} · $${(p.precio||0).toLocaleString()}</span></div>`
+  ).join('') || '<div style="font-size:13px;color:var(--color-text-secondary);padding:8px 0">Sin resultados</div>';
+}
+
+function seleccionarVentaProducto(id) {
+  ventaProductoId = id;
+  const p = getProducto(id);
+  document.getElementById('venta-options').innerHTML='';
+  document.getElementById('venta-search').value='';
+  document.getElementById('venta-prod-nombre').textContent = p.nombre;
+  document.getElementById('venta-precio').value = p.precio||0;
+  document.getElementById('venta-seleccionado').style.display='block';
+}
+
+function cancelarVenta() { ventaProductoId=null; document.getElementById('venta-seleccionado').style.display='none'; document.getElementById('venta-search').value=''; document.getElementById('venta-options').innerHTML=''; }
+
+function registrarVenta() {
+  if (!ventaProductoId) return;
+  const p = getProducto(ventaProductoId);
+  const cantidad = parseInt(document.getElementById('venta-cantidad').value)||1;
+  const precio = parseFloat(document.getElementById('venta-precio').value)||0;
+  const nota = document.getElementById('venta-nota').value;
+  if (cantidad>p.stock) { alert('Stock insuficiente. Solo hay '+p.stock+' unidades.'); return; }
+  p.stock -= cantidad;
+  historial.push({id:Date.now(), tipo:'venta', productoId:p.id, cantidad, precio, fecha:new Date().toISOString(), nota});
+  guardarDatos();
+  cancelarVenta();
+  renderVentasHoy();
+  alert(`Venta registrada: ${cantidad} × ${p.nombre}`);
+}
+
+function renderVentasHoy() {
+  const hoy = historial.filter(h=>h.tipo==='venta'&&esMismodia(h.fecha));
+  const total = hoy.reduce((a,v)=>a+(v.precio||0)*v.cantidad,0);
+  document.getElementById('ventas-hoy-resumen').innerHTML = `<div class="metric"><div class="label">Total ventas hoy</div><div class="value">$${total.toLocaleString()}</div></div>`;
+  document.getElementById('ventas-hoy-lista').innerHTML = hoy.length ? hoy.reverse().map(h=>{
+    const p=getProducto(h.productoId);
+    return `<div class="history-row"><span>${p?p.nombre:'—'} × ${h.cantidad}</span><span style="color:var(--color-text-secondary)">$${((h.precio||0)*h.cantidad).toLocaleString()}</span></div>`;
+  }).join('') : '<p style="font-size:13px;color:var(--color-text-secondary)">Sin ventas hoy aún.</p>';
+}
+
+function renderReportes() {
+  const valorTotal = productos.reduce((a,p)=>a+(p.precio||0)*p.stock,0);
+  const bajos = productos.filter(p=>p.stock>0&&p.stock<=p.minimo);
+  const agotados = productos.filter(p=>p.stock===0);
+  document.getElementById('reporte-resumen').innerHTML = `
+    <div style="display:grid;gap:8px">
+      <div class="history-row"><span>Total productos</span><strong>${productos.length}</strong></div>
+      <div class="history-row"><span>Valor inventario</span><strong>$${valorTotal.toLocaleString()}</strong></div>
+      <div class="history-row"><span>Agotados</span><strong style="color:var(--color-text-danger)">${agotados.length}</strong></div>
+      <div class="history-row"><span>Stock bajo</span><strong style="color:var(--color-text-warning)">${bajos.length}</strong></div>
+      <div class="history-row"><span>Movimientos registrados</span><strong>${historial.length}</strong></div>
+    </div>`;
+  document.getElementById('reporte-bajo').innerHTML = bajos.length||agotados.length ?
+    [...agotados,...bajos].map(p=>`<div class="history-row"><span>${p.nombre}</span><span>${stockBadge(p)} ${p.stock} unid.</span></div>`).join('') :
+    '<p style="font-size:13px;color:var(--color-text-secondary)">Todo con buen stock 🎉</p>';
+  const ultHistorial = [...historial].reverse().slice(0,20);
+  document.getElementById('reporte-historial').innerHTML = ultHistorial.map(h=>{
+    const p=getProducto(h.productoId);
+    const tipo = h.tipo==='entrada'?'<span class="tag-entrada">Entrada</span>':h.tipo==='venta'?'<span class="tag-venta">Venta</span>':'<span class="tag-salida">Salida</span>';
+    const fecha = new Date(h.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-row"><span>${tipo} · ${p?p.nombre:'Eliminado'}</span><span style="color:var(--color-text-secondary)">${h.cantidad} unid. · ${fecha}${h.nota?' · '+h.nota:''}</span></div>`;
+  }).join('') || '<p style="font-size:13px;color:var(--color-text-secondary)">Sin movimientos.</p>';
+}
+
+function exportarCSV() {
+  const rows = [['Tipo','Producto','Cantidad','Precio','Fecha','Nota'],...historial.map(h=>{const p=getProducto(h.productoId);return[h.tipo,p?p.nombre:'Eliminado',h.cantidad,h.precio||'',new Date(h.fecha).toLocaleDateString('es-CL'),h.nota||''];})];
+  const csv = rows.map(r=>r.join(';')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='inventario_lanas.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function abrirModal(modo, id) {
+  editandoId = modo==='editar' ? id : null;
+  document.getElementById('modal-titulo').textContent = modo==='editar' ? 'Editar producto' : 'Agregar producto';
+  if (modo==='editar') {
+    const p = getProducto(id);
+    document.getElementById('f-nombre').value=p.nombre;
+    document.getElementById('f-codigo').value=p.codigo||'';
+    document.getElementById('f-color').value=p.color||'';
+    document.getElementById('f-gramaje').value=p.gramaje||'';
+    document.getElementById('f-material').value=p.material||'';
+    document.getElementById('f-stock').value=p.stock;
+    document.getElementById('f-minimo').value=p.minimo;
+    document.getElementById('f-precio').value=p.precio||0;
+    document.getElementById('f-proveedor').value=p.proveedor||'';
+    document.getElementById('f-notas').value=p.notas||'';
+  } else {
+    ['f-nombre','f-codigo','f-color','f-gramaje','f-material','f-proveedor','f-notas'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-stock').value=0;
+    document.getElementById('f-minimo').value=5;
+    document.getElementById('f-precio').value=0;
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function cerrarModal() { document.getElementById('modal-overlay').classList.remove('open'); editandoId=null; }
+
+function guardarProducto() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio.'); return; }
+  const datos = {
+    nombre, codigo:document.getElementById('f-codigo').value.trim(),
+    color:document.getElementById('f-color').value.trim(),
+    gramaje:document.getElementById('f-gramaje').value.trim(),
+    material:document.getElementById('f-material').value.trim(),
+    stock:parseInt(document.getElementById('f-stock').value)||0,
+    minimo:parseInt(document.getElementById('f-minimo').value)||5,
+    precio:parseFloat(document.getElementById('f-precio').value)||0,
+    proveedor:document.getElementById('f-proveedor').value.trim(),
+    notas:document.getElementById('f-notas').value.trim(),
+  };
+  if (editandoId) {
+    const p = getProducto(editandoId);
+    const diffStock = datos.stock - p.stock;
+    Object.assign(p, datos);
+    if (diffStock!==0) historial.push({id:Date.now(), tipo:diffStock>0?'entrada':'salida', productoId:p.id, cantidad:Math.abs(diffStock), fecha:new Date().toISOString(), nota:'Ajuste manual'});
+  } else {
+    const nuevoId = (productos.length ? Math.max(...productos.map(p=>p.id))+1 : 1);
+    productos.push({id:nuevoId, ...datos});
+    if (datos.stock>0) historial.push({id:Date.now(), tipo:'entrada', productoId:nuevoId, cantidad:datos.stock, fecha:new Date().toISOString(), nota:'Stock inicial'});
+  }
+  guardarDatos();
+  renderTabla();
+  cerrarModal();
+}
+
+function abrirMovimiento(id) {
+  const p = getProducto(id);
+  const tipo = prompt(`Movimiento para "${p.nombre}" (stock actual: ${p.stock})\nEscribe:\n"+ N" para agregar N unidades\n"- N" para retirar N unidades\n\nEjemplo: +10 o -3`, '+');
+  if (!tipo) return;
+  const match = tipo.match(/^([+-])\s*(\d+)$/);
+  if (!match) { alert('Formato inválido. Usa +10 o -5'); return; }
+  const cantidad = parseInt(match[2]);
+  if (match[1]==='-' && cantidad>p.stock) { alert('No hay suficiente stock.'); return; }
+  p.stock += match[1]==='+' ? cantidad : -cantidad;
+  historial.push({id:Date.now(), tipo:match[1]==='+'?'entrada':'salida', productoId:p.id, cantidad, fecha:new Date().toISOString(), nota:'Ajuste manual'});
+  guardarDatos();
+  renderTabla();
+  renderMetrics();
+  renderAlertas();
+}
+
+function simularEscaneo() {
+  const codigos = productos.map(p=>p.codigo).filter(Boolean);
+  if (!codigos.length) { alert('No hay productos con códigos aún.'); return; }
+  const codigo = codigos[Math.floor(Math.random()*codigos.length)];
+  const p = productos.find(p=>p.codigo===codigo);
+  alert(`Código escaneado: ${codigo}\nProducto encontrado: ${p.nombre}\nStock actual: ${p.stock} unidades`);
+  document.getElementById('search-input').value = codigo;
+  renderTabla();
+}
+
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='dashboard') { renderMetrics(); renderAlertas(); renderHistorialReciente(); }
+  if (name==='inventario') renderTabla();
+  if (name==='ventas') renderVentasHoy();
+  if (name==='reportes') renderReportes();
+}
+
+cargarDatos();
+renderMetrics();
+renderAlertas();
+renderHistorialReciente();
+</script>
